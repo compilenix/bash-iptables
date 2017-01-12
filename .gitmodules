@@ -1,0 +1,3 @@
+[submodule "include"]
+	path = include
+	url = https://git.compilenix.org/Compilenix/bash-include-scripts
