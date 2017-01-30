@@ -28,7 +28,7 @@ fi
 
 
 function AddPortForwardingV4 {
-    runAndEcho "iptables -t nat -A PREROUTING -p $4 --dport $1 -i $5 -j DNAT --to $2:$3";
+    runAndEcho "iptables -t nat -A PREROUTING -p $4 --dport $1 -i $5 -j DNAT --to ${2}:${3}";
 }
 
 function AddPortForwardingV6 {
@@ -64,13 +64,13 @@ function updateEnv {
         icmp="icmp";
         dhcp="dhcp";
         igmp="igmp";
-        ;;
+    ;;
     "6")
         iptables="ip6tables";
         icmp="icmpv6";
         dhcp="dhcpv6";
         igmp="igmpv6";
-        ;;
+    ;;
     esac
 }
 
