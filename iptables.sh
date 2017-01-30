@@ -1,8 +1,9 @@
 #!/bin/bash
-function include { . "$(readlink -f $0)/include/$1.sh"; }
+function include { . "$(dirname $(readlink -f ${0}))/include/${1}.sh"; }
 
 include "color";
 include "isRoot";
+include "echo";
 
 echo -ne "$color_red";
 if [ $(isRoot) = "false" ]; then
@@ -19,10 +20,12 @@ restart  - drop all rules and setup iptables again
 EOF
 }
 
-if [ $# -ne 0 ]; then
-    printHelp;
-    return 1;
-fi
+case "$1" in
+    "help"|"--help"|"-h"|"h")
+        printHelp;
+        return 0;
+    ;;
+esac
 
 
 
@@ -36,19 +39,19 @@ function AddPortForwardingV6 {
 }
 
 function restart {
-    echo_info "restarting";
+    echo_info "restarting (${color_green}${iptables}${color_reset})";
     stop;
     start;
 }
 
 function start {
     loadModules;
-    echo_info "start iptables using ${color_green}${iptables}${color_reset}";
+    echo_info "start iptables (${color_green}${iptables}${color_reset})";
     startA;
 }
 
 function stop {
-    echo_info "stop iptables using ${color_green}${iptables}${color_reset}";
+    echo_info "stop iptables (${color_green}${iptables}${color_reset})";
     stopA;
 }
 
