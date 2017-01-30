@@ -41,6 +41,9 @@ function startInput {
     #$iptables -A INPUT -p TCP --dport 80 -j ACCEPT; # HTTP (insecure)
     #$iptables -A INPUT -p TCP --dport 443 -j ACCEPT; # HTTPS (secure)
     #$iptables -A INPUT -p TCP --dport 444 -j ACCEPT; # Common alternative HTTPS
+
+    $iptables -A INPUT -p TCP --match multiport --dports 138,445 -j DROP; # Silently drop some TCP destionation ports
+    $iptables -A INPUT -p UDP --match multiport --dports 138,445 -j DROP; # Silently drop some UDP destionation ports
 }
 
 function startForward {
@@ -61,6 +64,17 @@ function startOutput {
     $iptables -A OUTPUT -p UDP --dport 53 -j ACCEPT;
     $iptables -A OUTPUT -p TCP --dport 53 -j ACCEPT;
 
+    case $iptables in
+        "ip6tables")
+        ;;
+        "iptables")
+            #$iptables -A OUTPUT -p TCP --dport 53 -m iprange --dst-range 10.16.156.11-10.16.156.13 -j ACCEPT; # DNS TCP to ip range
+            #$iptables -A OUTPUT -p UDP --dport 53 -m iprange --dst-range 10.16.156.11-10.16.156.13 -j ACCEPT; # DNS UDP to ip range
+            #$iptables -A OUTPUT -p TCP --dport 53 -d 10.16.156.27 -j ACCEPT; # DNS TCP to ip
+            #$iptables -A OUTPUT -p TCP --dport 53 -d 10.16.156.27 -j ACCEPT; # DNS UDP to ip
+        ;;
+    esac
+
     #$iptables -A OUTPUT -p TCP --dport 80 -j ACCEPT;
     #$iptables -A OUTPUT -p TCP --dport 443 -j ACCEPT;
     #$iptables -A OUTPUT -p TCP --dport 80 -d 192.168.2.0/255.255.255.0 -j ACCEPT;
@@ -69,13 +83,13 @@ function startOutput {
 
 function startLogging {
     $iptables -N LOGGING_INPUT;
-    $iptables -A LOGGING_INPUT -m limit --limit 10/second -j LOG --log-prefix "iptables unhandled (Input): " --log-level 4;
+    $iptables -A LOGGING_INPUT -m limit --limit 3/second -j LOG --log-prefix "iptables unhandled (Input): " --log-level 4;
 
     $iptables -N LOGGING_FORWARD;
-    $iptables -A LOGGING_FORWARD -m limit --limit 10/second -j LOG --log-prefix "iptables unhandled (FORWARD): " --log-level 4;
+    $iptables -A LOGGING_FORWARD -m limit --limit 3/second -j LOG --log-prefix "iptables unhandled (FORWARD): " --log-level 4;
 
     $iptables -N LOGGING_OUTPUT;
-    $iptables -A LOGGING_OUTPUT -m limit --limit 10/second -j LOG --log-prefix "iptables unhandled (OUTPUT): " --log-level 4;
+    $iptables -A LOGGING_OUTPUT -m limit --limit 3/second -j LOG --log-prefix "iptables unhandled (OUTPUT): " --log-level 4;
 
     $iptables -A INPUT -j LOGGING_INPUT;
     $iptables -A FORWARD -j LOGGING_FORWARD;
