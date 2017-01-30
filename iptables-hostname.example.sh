@@ -36,7 +36,7 @@ function startInput {
     #$iptables -A INPUT -p TCP --dport 993 -j ACCEPT; # IMAP Server (secure)
     #$iptables -A INPUT -p TCP --dport 587 -j ACCEPT; # SMTP Server (secure)
     #$iptables -A INPUT -p TCP --dport 143 -j ACCEPT; # IMAP Server (insecure)
-    #$iptables -A INPUT -p TCP --dport 22 -j ACCEPT; # SSH (secure)
+    $iptables -A INPUT -p TCP --dport 22 -j ACCEPT; # SSH (secure)
     #$iptables -A INPUT -p TCP --dport 8080 -j ACCEPT; # Common alternative HTTP
     #$iptables -A INPUT -p TCP --dport 80 -j ACCEPT; # HTTP (insecure)
     #$iptables -A INPUT -p TCP --dport 443 -j ACCEPT; # HTTPS (secure)
@@ -49,7 +49,7 @@ function startForward {
 
 function startOutput {
     # allow local loopback and already established connections
-    $iptables -A OUTPUT -i lo -j ACCEPT;
+    $iptables -A OUTPUT -o lo -j ACCEPT;
     $iptables -A OUTPUT -m state --state ESTABLISHED,RELATED -j ACCEPT;
 
     # ICMP (Ping)
@@ -57,17 +57,25 @@ function startOutput {
     $iptables -A OUTPUT -p ${icmp} "--${icmp}-type" echo-reply -m limit --limit 1/second --limit-burst 5 -j ACCEPT;
     $iptables -A OUTPUT -p ${icmp} "--${icmp}-type" echo-request -m limit --limit 1/second --limit-burst 5 -j ACCEPT;
     $iptables -A OUTPUT -p ${icmp} "--${icmp}-type" echo-request -m limit --limit 1/second --limit-burst 5 -j ACCEPT;
+
+    $iptables -A OUTPUT -p UDP --dport 53 -j ACCEPT;
+    $iptables -A OUTPUT -p TCP --dport 53 -j ACCEPT;
+
+    #$iptables -A OUTPUT -p TCP --dport 80 -j ACCEPT;
+    #$iptables -A OUTPUT -p TCP --dport 443 -j ACCEPT;
+    #$iptables -A OUTPUT -p TCP --dport 80 -d 192.168.2.0/255.255.255.0 -j ACCEPT;
+    #$iptables -A OUTPUT -p TCP --dport 443 -d 192.168.2.0/255.255.255.0 -j ACCEPT;
 }
 
 function startLogging {
     $iptables -N LOGGING_INPUT;
-    $iptables -A LOGGING_INPUT -m limit --limit 10/second -j LOG --log-prefix "iptables unhandled traffic (Input): " --log-level 4;
+    $iptables -A LOGGING_INPUT -m limit --limit 10/second -j LOG --log-prefix "iptables unhandled (Input): " --log-level 4;
 
     $iptables -N LOGGING_FORWARD;
-    $iptables -A LOGGING_FORWARD -m limit --limit 10/second -j LOG --log-prefix "iptables unhandled traffic (FORWARD): " --log-level 4;
+    $iptables -A LOGGING_FORWARD -m limit --limit 10/second -j LOG --log-prefix "iptables unhandled (FORWARD): " --log-level 4;
 
     $iptables -N LOGGING_OUTPUT;
-    $iptables -A LOGGING_OUTPUT -m limit --limit 10/second -j LOG --log-prefix "iptables unhandled traffic (OUTPUT): " --log-level 4;
+    $iptables -A LOGGING_OUTPUT -m limit --limit 10/second -j LOG --log-prefix "iptables unhandled (OUTPUT): " --log-level 4;
 
     $iptables -A INPUT -j LOGGING_INPUT;
     $iptables -A FORWARD -j LOGGING_FORWARD;
@@ -81,8 +89,9 @@ function startDropEverything {
 }
 
 function startA {
-    $iptables -F;
-    $iptables -t nat -F;
+    $iptables -F; # remove all policies
+    $iptables -X; # remove all non-default chains
+    $iptables -t nat -F; # remove all policies (NAT)
 
     $iptables -P INPUT ACCEPT;
     $iptables -P FORWARD ACCEPT;
@@ -144,8 +153,9 @@ function startA {
 }
 
 function stopA {
-    $iptables -F;
-    $iptables -t nat -F;
+    $iptables -F; # remove all policies
+    $iptables -X; # remove all non-default chains
+    $iptables -t nat -F; # remove all policies (NAT)
 
     $iptables -P INPUT ACCEPT;
     $iptables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT;
