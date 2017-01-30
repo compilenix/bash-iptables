@@ -5,24 +5,16 @@ include "iptables";
 
 LAN=eth0;
 
-function startA {
-    # First we flush our current rules
-    $iptables -F;
-    $iptables -t nat -F;
-
-    $iptables -P INPUT ACCEPT;
-    $iptables -P OUTPUT ACCEPT;
-    $iptables -P FORWARD ACCEPT;
-
-    # Then we lock our services so they only work from the LAN
+function startInput {
+    # allow local loopback and already established connections
     $iptables -A INPUT -i lo -j ACCEPT;
-    #$iptables -I INPUT -j ACCEPT;
-    #$iptables -A INPUT -i ${LAN} -j ACCEPT;
     $iptables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT;
 
     # ICMP (Ping)
-    $iptables -A INPUT -p ${icmp} "--${icmp}-type" echo-reply -j ACCEPT;
-    $iptables -A INPUT -p ${icmp} "--${icmp}-type" echo-reply -j ACCEPT;
+    $iptables -A INPUT -p ${icmp} "--${icmp}-type" echo-reply -m limit --limit 1/second --limit-burst 5 -j ACCEPT;
+    $iptables -A INPUT -p ${icmp} "--${icmp}-type" echo-reply -m limit --limit 1/second --limit-burst 5 -j ACCEPT;
+    $iptables -A INPUT -p ${icmp} "--${icmp}-type" echo-request -m limit --limit 1/second --limit-burst 5 -j ACCEPT;
+    $iptables -A INPUT -p ${icmp} "--${icmp}-type" echo-request -m limit --limit 1/second --limit-burst 5 -j ACCEPT;
 
     # for NFS server
     #$iptables -A INPUT -p tcp -m tcp --dport 111 -j ACCEPT;
@@ -49,6 +41,56 @@ function startA {
     #$iptables -A INPUT -p TCP --dport 80 -j ACCEPT; # HTTP (insecure)
     #$iptables -A INPUT -p TCP --dport 443 -j ACCEPT; # HTTPS (secure)
     #$iptables -A INPUT -p TCP --dport 444 -j ACCEPT; # Common alternative HTTPS
+}
+
+function startForward {
+    echo -n;
+}
+
+function startOutput {
+    # allow local loopback and already established connections
+    $iptables -A OUTPUT -i lo -j ACCEPT;
+    $iptables -A OUTPUT -m state --state ESTABLISHED,RELATED -j ACCEPT;
+
+    # ICMP (Ping)
+    $iptables -A OUTPUT -p ${icmp} "--${icmp}-type" echo-reply -m limit --limit 1/second --limit-burst 5 -j ACCEPT;
+    $iptables -A OUTPUT -p ${icmp} "--${icmp}-type" echo-reply -m limit --limit 1/second --limit-burst 5 -j ACCEPT;
+    $iptables -A OUTPUT -p ${icmp} "--${icmp}-type" echo-request -m limit --limit 1/second --limit-burst 5 -j ACCEPT;
+    $iptables -A OUTPUT -p ${icmp} "--${icmp}-type" echo-request -m limit --limit 1/second --limit-burst 5 -j ACCEPT;
+}
+
+function startLogging {
+    $iptables -N LOGGING_INPUT;
+    $iptables -A LOGGING_INPUT -m limit --limit 10/second -j LOG --log-prefix "iptables unhandled traffic (Input): " --log-level 4;
+
+    $iptables -N LOGGING_FORWARD;
+    $iptables -A LOGGING_FORWARD -m limit --limit 10/second -j LOG --log-prefix "iptables unhandled traffic (FORWARD): " --log-level 4;
+
+    $iptables -N LOGGING_OUTPUT;
+    $iptables -A LOGGING_OUTPUT -m limit --limit 10/second -j LOG --log-prefix "iptables unhandled traffic (OUTPUT): " --log-level 4;
+
+    $iptables -A INPUT -j LOGGING_INPUT;
+    $iptables -A FORWARD -j LOGGING_FORWARD;
+    $iptables -A OUTPUT -j LOGGING_OUTPUT;
+}
+
+function startDropEverything {
+    $iptables -A INPUT -j DROP;
+    $iptables -A FORWARD -j DROP;
+    $iptables -A OUTPUT -j DROP;
+}
+
+function startA {
+    $iptables -F;
+    $iptables -t nat -F;
+
+    $iptables -P INPUT ACCEPT;
+    $iptables -P FORWARD ACCEPT;
+    $iptables -P OUTPUT ACCEPT;
+
+    startInput;
+    startForward;
+    startOutput;
 
     # Port redirect (on to a local port only)
     #$iptables -t nat -A PREROUTING -p tcp --dport 8079 -i ${WAN} -j REDIRECT --to-port 22;
@@ -85,8 +127,8 @@ function startA {
             ;;
     esac
 
-    $iptables -A INPUT -j DROP;
-    $iptables -A FORWARD -j DROP;
+    startLogging;
+    startDropEverything;
 
     case $iptables in
     "ip6tables")
@@ -108,7 +150,7 @@ function stopA {
     $iptables -P INPUT ACCEPT;
     $iptables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT;
     $iptables -P OUTPUT ACCEPT;
-    $iptables -P FORWARD DROP;
+    $iptables -P FORWARD ACCEPT;
 
     case $iptables in
         "ip6tables")
