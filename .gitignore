@@ -4,3 +4,5 @@ ehthumbs.db
 Thumbs.db
 pids
 /include
+/iptables-*.sh
+!/iptables-*.example.sh
