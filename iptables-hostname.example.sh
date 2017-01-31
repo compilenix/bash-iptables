@@ -42,8 +42,8 @@ function startInput {
     #$iptables -A INPUT -p TCP --dport 443 -j ACCEPT; # HTTPS (secure)
     #$iptables -A INPUT -p TCP --dport 444 -j ACCEPT; # Common alternative HTTPS
 
-    $iptables -A INPUT -p TCP --match multiport --dports 138,445 -j DROP; # Silently drop some TCP destionation ports
-    $iptables -A INPUT -p UDP --match multiport --dports 138,445 -j DROP; # Silently drop some UDP destionation ports
+    $iptables -A INPUT -p TCP --match multiport --dports 137,138,445 -j DROP; # Silently drop some TCP destionation ports
+    $iptables -A INPUT -p UDP --match multiport --dports 137,138,445 -j DROP; # Silently drop some UDP destionation ports
 }
 
 function startForward {
