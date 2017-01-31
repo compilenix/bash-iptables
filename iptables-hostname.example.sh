@@ -115,6 +115,7 @@ function startA {
     $iptables -F; # remove all policies
     $iptables -X; # remove all non-default chains
     $iptables -t nat -F; # remove all policies (NAT)
+    $iptables -Z; # Zero the packet and byte counters in all chains
 
     $iptables -P INPUT ACCEPT;
     $iptables -P FORWARD ACCEPT;
@@ -179,6 +180,7 @@ function stopA {
     $iptables -F; # remove all policies
     $iptables -X; # remove all non-default chains
     $iptables -t nat -F; # remove all policies (NAT)
+    $iptables -Z; # Zero the packet and byte counters in all chains
 
     $iptables -P INPUT ACCEPT;
     $iptables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT;
