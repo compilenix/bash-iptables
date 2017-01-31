@@ -67,27 +67,27 @@ function startOutput {
         "ip6tables")
         ;;
         "iptables")
-            $iptables -A OUTPUT -p TCP --dport 53 -m iprange --dst-range 192.168.2.11-192.168.2.13 -j ACCEPT -m comment --comment "DNS TCP from NS1 - NS3";
-            $iptables -A OUTPUT -p UDP --dport 53 -m iprange --dst-range 192.168.2.11-192.168.2.13 -j ACCEPT -m comment --comment "DNS UDP from NS1 - NS3";
+            #$iptables -A OUTPUT -p TCP --dport 53 -m iprange --dst-range 192.168.2.11-192.168.2.13 -j ACCEPT -m comment --comment "DNS TCP from NS1 - NS3";
+            #$iptables -A OUTPUT -p UDP --dport 53 -m iprange --dst-range 192.168.2.11-192.168.2.13 -j ACCEPT -m comment --comment "DNS UDP from NS1 - NS3";
 
-            $iptables -A OUTPUT -p TCP --dport 53 -d 10.0.176.22 -j ACCEPT -m comment --comment "DNS TCP to Backup NS4";
-            $iptables -A OUTPUT -p UDP --dport 53 -d 10.0.176.22 -j ACCEPT -m comment --comment "DNS UDP to Backup NS4";
+            #$iptables -A OUTPUT -p TCP --dport 53 -d 10.0.176.22 -j ACCEPT -m comment --comment "DNS TCP to Backup NS4";
+            #$iptables -A OUTPUT -p UDP --dport 53 -d 10.0.176.22 -j ACCEPT -m comment --comment "DNS UDP to Backup NS4";
 
-            $iptables -A OUTPUT -p TCP --match multiport --dports 443,22 -d someServer1.example.com -j ACCEPT -m comment --comment "someServer1";
-            $iptables -A OUTPUT -p TCP --match multiport --dports 443,22 -d someServer2.example.com -j ACCEPT -m comment --comment "someServer2";
-            $iptables -A OUTPUT -p TCP --match multiport --dports 443,22 -d someServer3.example.com -j ACCEPT -m comment --comment "someServer3";
-            $iptables -A OUTPUT -p TCP --match multiport --dports 443,22 -d someServer4.example.com -j ACCEPT -m comment --comment "someServer4";
+            #$iptables -A OUTPUT -p TCP --match multiport --dports 443,22 -d someServer1.example.com -j ACCEPT -m comment --comment "someServer1";
+            #$iptables -A OUTPUT -p TCP --match multiport --dports 443,22 -d someServer2.example.com -j ACCEPT -m comment --comment "someServer2";
+            #$iptables -A OUTPUT -p TCP --match multiport --dports 443,22 -d someServer3.example.com -j ACCEPT -m comment --comment "someServer3";
+            #$iptables -A OUTPUT -p TCP --match multiport --dports 443,22 -d someServer4.example.com -j ACCEPT -m comment --comment "someServer4";
 
-            $iptables -A OUTPUT -p TCP --dport 3306 -d someServer5.example.com -j ACCEPT -m comment --comment "MySQL on someServer5";
-            $iptables -A OUTPUT -p TCP --dport 25 -d mail.example.com -j ACCEPT -m comment --comment "SMTP relay on mail.example.com";
+            #$iptables -A OUTPUT -p TCP --dport 3306 -d someServer5.example.com -j ACCEPT -m comment --comment "MySQL on someServer5";
+            #$iptables -A OUTPUT -p TCP --dport 25 -d mail.example.com -j ACCEPT -m comment --comment "SMTP relay on mail.example.com";
        ;;
     esac
 
-    $iptables -A OUTPUT -p TCP --match multiport --dports 80,443 -d artfiles.org -j ACCEPT -m comment --comment "debian update server";
-    $iptables -A OUTPUT -p TCP --match multiport --dports 80,443 -d deb.nodesource.com -j ACCEPT -m comment --comment "nodejs update server";
-    $iptables -A OUTPUT -p TCP --match multiport --dports 80,443 -d security.debian.org -j ACCEPT -m comment --comment "debian update server";
+    #$iptables -A OUTPUT -p TCP --match multiport --dports 80,443 -d artfiles.org -j ACCEPT -m comment --comment "debian update server";
+    #$iptables -A OUTPUT -p TCP --match multiport --dports 80,443 -d deb.nodesource.com -j ACCEPT -m comment --comment "nodejs update server";
+    #$iptables -A OUTPUT -p TCP --match multiport --dports 80,443 -d security.debian.org -j ACCEPT -m comment --comment "debian update server";
 
-    #$iptables -A OUTPUT -j ACCEPT;
+    $iptables -A OUTPUT -j ACCEPT;
 }
 
 function startLogging {
@@ -112,8 +112,9 @@ function startDropEverything {
 }
 
 function startA {
-    $iptables -F;
-    $iptables -t nat -F;
+    $iptables -F; # remove all policies
+    $iptables -X; # remove all non-default chains
+    $iptables -t nat -F; # remove all policies (NAT)
 
     $iptables -P INPUT ACCEPT;
     $iptables -P FORWARD ACCEPT;
@@ -133,7 +134,7 @@ function startA {
         ;;
 
         "iptables")
-            # Port Forwarding   From    To              To      Protocol -m comment   Comment
+            # Port Forwarding   From    To              To      Protocol   Comment
             #AddPortForwardingV4 30033   192.168.1.5     30033   tcp;        # TeamSpeak 3 Server
             #AddPortForwardingV4 10011   192.168.1.5     10011   tcp;        # TeamSpeak 3 Server
             #AddPortForwardingV4 2008    192.168.1.5      2008   tcp;        # TeamSpeak 3 Server
@@ -175,9 +176,9 @@ function startA {
 }
 
 function stopA {
-    $iptables -F;
-    $iptables -t nat -F;
-    $iptables -X;
+    $iptables -F; # remove all policies
+    $iptables -X; # remove all non-default chains
+    $iptables -t nat -F; # remove all policies (NAT)
 
     $iptables -P INPUT ACCEPT;
     $iptables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT;
