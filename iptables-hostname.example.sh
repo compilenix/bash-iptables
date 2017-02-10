@@ -91,6 +91,9 @@ function startOutput {
 }
 
 function startLogging {
+    # NOTE: The logging should contain 'iptables' at all times to get filtered by syslog
+    # NOTE: The value of --log-prefix should not exeed 32 characters. see also: L18 @ http://ftp.netfilter.org/pub/iptables/iptables-1.4.1-rc3/include/linux/netfilter_ipv4/ipt_ULOG.h
+
     $iptables -N LOGGING_INPUT;
     $iptables -A LOGGING_INPUT -m limit --limit 3/second -j LOG --log-prefix "iptables unhandled (Input): " --log-level 4;
 
