@@ -6,7 +6,6 @@ After=network.target
 Type=simple
 ExecStart=/bin/bash /usr/sbin/iptables.sh start
 ExecStop=/bin/bash /usr/sbin/iptables.sh stop
-ExecRestart=/bin/bash /usr/sbin/iptables.sh restart
 RemainAfterExit=yes
 StandardOutput=journal+console
 
